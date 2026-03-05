@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI Career Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ec;
+  --surface: #edeae2;
+  --card: #ffffff;
+  --ink: #1a1814;
+  --ink2: #5a5650;
+  --ink3: #9a9590;
+  --border: #ddd9d0;
+  --a1: #e84c3d;
+  --a2: #2563eb;
+  --a3: #16a34a;
+  --a4: #d97706;
+  --a5: #7c3aed;
+  --a6: #0891b2;
+  --done-bg: #f0fdf4;
+  --done-border: #bbf7d0;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* Noise texture overlay */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:999;
+  opacity:0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--ink);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.topbar-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ── HERO STATS ── */
+.hero {
+  background: var(--ink);
+  color: #fff;
+  padding: 0 20px 28px;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stat-box {
+  background: rgba(255,255,255,0.04);
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.stat-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  display: block;
+}
+
+.stat-lbl {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-top: 3px;
+  display: block;
+}
+
+/* ── PHASE PROGRESS BAR ── */
+.phase-bar-wrap {
+  padding: 20px 20px 0;
+}
+
+.phase-bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.phase-bar-label span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+
+.phase-bar-label em {
+  font-style: normal;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.phase-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.phase-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  background: var(--ink);
+}
+
+/* ── SECTION HEADERS ── */
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  color: var(--ink2);
+  padding: 24px 20px 10px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── DAILY TASK CARDS ── */
+.tasks-wrap {
+  padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.task-card:active { transform: scale(0.98); }
+
+.task-card.done {
+  background: var(--done-bg);
+  border-color: var(--done-border);
+}
+
+.task-card.done .task-title {
+  text-decoration: line-through;
+  color: var(--ink3);
+}
+
+.task-card.done .task-sub {
+  color: var(--ink3);
+  opacity: 0.6;
+}
+
+.task-accent {
+  width: 3px;
+  border-radius: 2px;
+  align-self: stretch;
+  flex-shrink: 0;
+  min-height: 40px;
+}
+
+.task-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.task-card.done .task-check {
+  background: var(--a3);
+  border-color: var(--a3);
+}
+
+.check-icon {
+  display: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.task-card.done .check-icon { display: block; }
+
+.task-content { flex: 1; min-width: 0; }
+
+.task-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.task-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 3px;
+}
+
+.task-sub {
+  font-size: 12px;
+  color: var(--ink3);
+  line-height: 1.4;
+}
+
+.task-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── ANKI / REVISION BLOCK ── */
+.revision-card {
+  margin: 0 12px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.revision-card:active { opacity: 0.85; }
+
+.revision-card.done { background: #14532d; }
+
+.rev-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.rev-content { flex: 1; }
+
+.rev-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.rev-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+}
+
+.rev-check {
+  font-size: 1.4rem;
+}
+
+/* ── PHASE SELECTOR ── */
+.phase-nav {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.phase-nav::-webkit-scrollbar { display: none; }
+
+.phase-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.phase-btn.active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+/* ── STREAK BADGES ── */
+.streak-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.streak-row::-webkit-scrollbar { display: none; }
+
+.streak-badge {
+  flex-shrink: 0;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: center;
+  min-width: 60px;
+}
+
+.streak-badge.today {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.streak-badge.complete {
+  background: var(--done-bg);
+  border-color: var(--done-border);
+}
+
+.streak-day {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.streak-badge.today .streak-day { color: rgba(255,255,255,0.6); }
+
+.streak-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  display: block;
+  line-height: 1;
+}
+
+.streak-dot-row {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.sdot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.sdot.done { background: var(--a3); }
+.streak-badge.today .sdot { background: rgba(255,255,255,0.3); }
+.streak-badge.today .sdot.done { background: #4ade80; }
+
+/* ── MOTIVATIONAL QUOTE ── */
+.quote-box {
+  margin: 0 12px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border-left: 3px solid var(--ink);
+  border-radius: 0 8px 8px 0;
+}
+
+.quote-text {
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.quote-author {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: 6px;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 4px 8px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: 'DM Sans', sans-serif;
+  gap: 3px;
+  transition: background 0.15s;
+}
+.nav-btn:active { background: var(--surface); }
+.nav-icon { font-size: 1.3rem; line-height: 1; }
+.nav-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  transition: color 0.15s;
+}
+.nav-btn.active .nav-label { color: var(--ink); }
+
+/* ── PAGE SYSTEM ── */
+.page { display: none; padding-bottom: 90px; }
+.page.active { display: block; }
+
+/* ── TRACKER ACTION BAR ── */
+.bottom-bar {
+  padding: 12px 12px 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* ── ANALYSIS PAGE ── */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 12px;
+}
+.an-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.an-card.full { grid-column: 1 / -1; }
+.an-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.an-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--ink);
+}
+.an-sub {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: 3px;
+}
+.phase-progress-list { display: flex; flex-direction: column; gap: 10px; }
+.pp-row { display: flex; flex-direction: column; gap: 4px; }
+.pp-top { display: flex; justify-content: space-between; align-items: center; }
+.pp-name { font-size: 12px; font-weight: 600; color: var(--ink2); }
+.pp-pct { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink3); }
+.pp-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.pp-fill { height: 100%; border-radius: 3px; }
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-family: 'DM Mono', monospace;
+  color: var(--ink3);
+  position: relative;
+}
+.cal-day.has-data { background: #bbf7d0; color: #14532d; font-weight: 600; }
+.cal-day.today-cal { outline: 2px solid var(--ink); outline-offset: 1px; }
+.cal-day.before-start { opacity: 0.25; }
+.cal-header-day {
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  padding-bottom: 2px;
+}
+
+/* ── NOTES PAGE ── */
+.notes-toolbar {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 10px;
+}
+.notes-toolbar::-webkit-scrollbar { display: none; }
+.note-tab {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.note-tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.note-tab .tab-close {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.5;
+  margin-left: 2px;
+}
+.note-tab .tab-close:hover { opacity: 1; }
+.note-add-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink2);
+  transition: all 0.2s;
+}
+.note-add-btn:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+.note-editor-wrap {
+  padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.note-title-input {
+  width: 100%;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  padding: 4px 0;
+  border-bottom: 2px solid var(--border);
+}
+.note-title-input::placeholder { color: var(--ink3); }
+.note-textarea {
+  width: 100%;
+  min-height: 55vh;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 16px;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+}
+.note-textarea:focus { border-color: var(--ink2); }
+.note-meta {
+  font-size: 10px;
+  color: var(--ink3);
+  font-family: 'DM Mono', monospace;
+  text-align: right;
+}
+.notes-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ink3);
+}
+.notes-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.notes-empty-text { font-size: 14px; line-height: 1.6; }
+
+.btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--ink2);
+  border: 1.5px solid var(--border);
+}
+
+.btn:active { transform: scale(0.97); }
+
+/* ── COMPLETE DAY OVERLAY ── */
+.congrats {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,24,20,0.85);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 40px;
+}
+
+.congrats.show { display: flex; }
+
+.congrats-inner {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 40px 32px;
+  max-width: 320px;
+  width: 100%;
+}
+
+.congrats-emoji { font-size: 4rem; margin-bottom: 16px; }
+
+.congrats-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.congrats-sub {
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-title" id="pageTitle">📈 AI TRACKER</div>
+  <div class="topbar-date" id="topDate"></div>
+</div>
+
+<!-- ══════════════════ PAGE: TRACKER ══════════════════ -->
+<div class="page active" id="page-tracker">
+
+  <!-- HERO STATS -->
+  <div class="hero">
+    <div class="stats-row">
+      <div class="stat-box">
+        <span class="stat-val" id="statDay">1</span>
+        <span class="stat-lbl">Day</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="statStreak">0</span>
+        <span class="stat-lbl">Streak 🔥</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="statDone">0</span>
+        <span class="stat-lbl">Done Today</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="statPhase">1</span>
+        <span class="stat-lbl">Phase</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERALL PROGRESS -->
+  <div class="phase-bar-wrap">
+    <div class="phase-bar-label">
+      <span id="phaseLabel">Phase 1 — Foundations</span>
+      <em id="phasePct">0%</em>
+    </div>
+    <div class="phase-track">
+      <div class="phase-fill" id="phaseFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot" style="background:#1a1814"></span>Select Phase</div>
+  <div class="phase-nav" id="phaseNav"></div>
+
+  <div class="section-title"><span class="dot" style="background:#16a34a"></span>This Week</div>
+  <div class="streak-row" id="streakRow"></div>
+
+  <div class="section-title"><span class="dot" style="background:#e84c3d"></span>Today's Fuel</div>
+  <div class="quote-box">
+    <div class="quote-text" id="quoteText"></div>
+    <div class="quote-author" id="quoteAuthor"></div>
+  </div>
+
+  <div class="section-title"><span class="dot" style="background:#2563eb"></span>Today's 4 Hours</div>
+  <div class="tasks-wrap" id="tasksList"></div>
+
+  <div class="section-title"><span class="dot" style="background:#7c3aed"></span>Daily Revision</div>
+  <div style="padding:0 12px; display:flex; flex-direction:column; gap:8px;" id="revisionList"></div>
+
+  <!-- ACTION BAR -->
+  <div class="bottom-bar">
+    <button class="btn btn-secondary" onclick="resetDay()">↩ Reset</button>
+    <button class="btn btn-primary" onclick="completeDay()">✓ Complete Day</button>
+  </div>
+
+</div><!-- /page-tracker -->
+
+<!-- ══════════════════ PAGE: ANALYSIS ══════════════════ -->
+<div class="page" id="page-analysis">
+
+  <div class="section-title"><span class="dot" style="background:#e84c3d"></span>Overall Stats</div>
+  <div class="analysis-grid" id="analysisGrid">
+    <!-- filled by JS -->
+  </div>
+
+  <div class="section-title"><span class="dot" style="background:#2563eb"></span>Phase Progress</div>
+  <div style="padding:0 12px;">
+    <div class="an-card full">
+      <div class="phase-progress-list" id="phaseProgressList"></div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot" style="background:#16a34a"></span>Activity Calendar</div>
+  <div style="padding:0 12px;">
+    <div class="an-card full">
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </div>
+
+</div><!-- /page-analysis -->
+
+<!-- ══════════════════ PAGE: NOTES ══════════════════ -->
+<div class="page" id="page-notes">
+
+  <div class="section-title"><span class="dot" style="background:#d97706"></span>Notes</div>
+
+  <!-- TABS ROW -->
+  <div class="notes-toolbar" id="notesTabBar">
+    <!-- tabs filled by JS -->
+    <button class="note-add-btn" onclick="addNote()" title="New note">＋</button>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="note-editor-wrap" id="noteEditorWrap">
+    <div class="notes-empty" id="notesEmpty">
+      <div class="notes-empty-icon">📝</div>
+      <div class="notes-empty-text">No notes yet.<br>Tap ＋ to create your first note.</div>
+    </div>
+    <input type="text" class="note-title-input" id="noteTitleInput" placeholder="Note title..." style="display:none" oninput="saveCurrentNote()">
+    <textarea class="note-textarea" id="noteTextarea" placeholder="Start typing... (Tab key works for indentation)" style="display:none" oninput="saveCurrentNote()"></textarea>
+    <div class="note-meta" id="noteMeta" style="display:none"></div>
+  </div>
+
+</div><!-- /page-notes -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-tracker" onclick="switchPage('tracker')">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Today</span>
+  </button>
+  <button class="nav-btn" id="nav-analysis" onclick="switchPage('analysis')">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Analysis</span>
+  </button>
+  <button class="nav-btn" id="nav-notes" onclick="switchPage('notes')">
+    <span class="nav-icon">📝</span>
+    <span class="nav-label">Notes</span>
+  </button>
+</div>
+
+<!-- CONGRATS OVERLAY -->
+<div class="congrats" id="congrats">
+  <div class="congrats-inner">
+    <div class="congrats-emoji" id="congratsEmoji">🎉</div>
+    <div class="congrats-title" id="congratsTitle">DAY COMPLETE!</div>
+    <div class="congrats-sub" id="congratsSub">Great work. Commit to GitHub and rest well.</div>
+    <button class="btn btn-primary" onclick="closeCongrats()">Keep Going →</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+
+const PHASES = [
+  { id:1, name:"Foundations", color:"#e84c3d", months:"Month 1" },
+  { id:2, name:"Core ML",     color:"#2563eb", months:"Month 2" },
+  { id:3, name:"Deep Learning",color:"#d97706",months:"Month 3" },
+  { id:4, name:"MLOps+Cloud", color:"#16a34a", months:"Month 4" },
+  { id:5, name:"Projects",    color:"#7c3aed", months:"Month 5" },
+  { id:6, name:"Job Hunt",    color:"#0891b2", months:"Month 6" },
+];
+
+const TASKS = {
+  1: [
+    { id:"p1t1", label:"Hour 1 · Theory",   color:"#e84c3d", title:"Python + NumPy Fundamentals",     sub:"Broadcasting, vectorised ops, array slicing",     time:"1h" },
+    { id:"p1t2", label:"Hour 2 · Coding",   color:"#2563eb", title:"Pandas Practice",                  sub:"GroupBy, merge, pivot — 10 exercises",            time:"1h" },
+    { id:"p1t3", label:"Hour 3 · Practice", color:"#d97706", title:"SQL Query Practice",               sub:"3 StrataScratch / HackerRank SQL problems",       time:"1h" },
+    { id:"p1t4", label:"Hour 4 · Review",   color:"#16a34a", title:"Anki + GitHub Commit",             sub:"15min Anki · Commit today's code · 3-line journal",time:"1h" },
+    { id:"p1t5", label:"DSA Daily",         color:"#7c3aed", title:"1 LeetCode Easy",                  sub:"Arrays or Strings — build the habit early",       time:"30m" },
+  ],
+  2: [
+    { id:"p2t1", label:"Hour 1 · Theory",   color:"#e84c3d", title:"ML Algorithm Deep Dive",          sub:"Understand bias-variance, loss functions",         time:"1h" },
+    { id:"p2t2", label:"Hour 2 · Coding",   color:"#2563eb", title:"Implement from Scratch",           sub:"Linear/Logistic Regression — no Sklearn",         time:"1h" },
+    { id:"p2t3", label:"Hour 3 · Practice", color:"#d97706", title:"Kaggle Dataset Practice",          sub:"EDA + baseline model on a new dataset",           time:"1h" },
+    { id:"p2t4", label:"Hour 4 · Review",   color:"#16a34a", title:"Anki + GitHub Commit",             sub:"Update ML concept cards · Push notebook",         time:"1h" },
+    { id:"p2t5", label:"DSA Daily",         color:"#7c3aed", title:"1 LeetCode Easy/Medium",           sub:"HashMaps, Two Pointers — ramp up slowly",         time:"30m" },
+  ],
+  3: [
+    { id:"p3t1", label:"Hour 1 · Theory",   color:"#e84c3d", title:"Deep Learning Concepts",          sub:"Backprop, activations, CNN/RNN architectures",    time:"1h" },
+    { id:"p3t2", label:"Hour 2 · Coding",   color:"#2563eb", title:"PyTorch Implementation",          sub:"Build and train a network on real data",          time:"1h" },
+    { id:"p3t3", label:"Hour 3 · Practice", color:"#d97706", title:"HuggingFace / Kaggle NLP/CV",     sub:"Fine-tune a small model or compete on Kaggle",    time:"1h" },
+    { id:"p3t4", label:"Hour 4 · Review",   color:"#16a34a", title:"Anki + GitHub Commit",            sub:"DL concept cards · Save training experiment",     time:"1h" },
+    { id:"p3t5", label:"DSA Daily",         color:"#7c3aed", title:"1 LeetCode Medium",               sub:"Trees or Recursion — useful for MLE rounds",     time:"30m" },
+  ],
+  4: [
+    { id:"p4t1", label:"Hour 1 · Theory",   color:"#e84c3d", title:"MLOps / Cloud Concept",           sub:"Docker, FastAPI, MLflow, AWS/GCP basics",         time:"1h" },
+    { id:"p4t2", label:"Hour 2 · Coding",   color:"#2563eb", title:"Build & Deploy Pipeline",         sub:"Containerise a model or set up MLflow tracking",  time:"1h" },
+    { id:"p4t3", label:"Hour 3 · Practice", color:"#d97706", title:"Cloud Hands-On (Free Tier)",      sub:"S3 + EC2 or Vertex AI — follow a tutorial",       time:"1h" },
+    { id:"p4t4", label:"Hour 4 · Review",   color:"#16a34a", title:"Anki + GitHub Commit",            sub:"MLOps cards · Document architecture decision",    time:"1h" },
+    { id:"p4t5", label:"DSA Daily",         color:"#7c3aed", title:"1 LeetCode Medium",               sub:"Strings, Sorting — keep the habit going",        time:"30m" },
+  ],
+  5: [
+    { id:"p5t1", label:"Hour 1 · Build",    color:"#e84c3d", title:"Capstone Project Work",           sub:"Feature engineering, modelling, or deployment",  time:"1h" },
+    { id:"p5t2", label:"Hour 2 · Build",    color:"#2563eb", title:"Capstone Project Work",           sub:"Write clean code, add docstrings, test it",       time:"1h" },
+    { id:"p5t3", label:"Hour 3 · Polish",   color:"#d97706", title:"Portfolio / README / Blog",       sub:"Update GitHub README or write 1 blog paragraph", time:"1h" },
+    { id:"p5t4", label:"Hour 4 · Review",   color:"#16a34a", title:"Anki + Revision",                sub:"Review Month 1–4 weak spots · Flashcards",        time:"1h" },
+    { id:"p5t5", label:"DSA Daily",         color:"#7c3aed", title:"2 LeetCode Problems",             sub:"Mixed — simulate interview conditions",           time:"30m" },
+  ],
+  6: [
+    { id:"p6t1", label:"Hour 1 · Prep",     color:"#e84c3d", title:"ML Interview Concepts",           sub:"Bias-variance, ensembles, regularisation — aloud",time:"1h" },
+    { id:"p6t2", label:"Hour 2 · Coding",   color:"#2563eb", title:"LeetCode + SQL Practice",         sub:"1 LeetCode Med + 2 StrataScratch SQL problems",   time:"1h" },
+    { id:"p6t3", label:"Hour 3 · Apply",    color:"#d97706", title:"Job Applications",                sub:"Apply to 2 roles · Tailor CV for each",           time:"1h" },
+    { id:"p6t4", label:"Hour 4 · Network",  color:"#16a34a", title:"LinkedIn + Community",            sub:"Connect with 2 ML people · Engage with 1 post",   time:"1h" },
+    { id:"p6t5", label:"Mock Interview",    color:"#7c3aed", title:"Practice 1 Behavioural Answer",   sub:"STAR format — pick a project to walk through",    time:"30m" },
+  ],
+};
+
+const REVISION_TASKS = [
+  { id:"rev1", emoji:"🃏", title:"Anki Flashcards", sub:"15 min — review due cards only", color:"#7c3aed" },
+  { id:"rev2", emoji:"🗣️", title:"Rubber Duck Explain", sub:"Pick 1 concept — explain it out loud in 2 mins", color:"#e84c3d" },
+  { id:"rev3", emoji:"📓", title:"3-Line Journal", sub:"What I learned · What confused me · What's next", color:"#2563eb" },
+];
+
+const QUOTES = [
+  { text:"The expert in anything was once a beginner.", author:"— Helen Hayes" },
+  { text:"Don't watch the clock; do what it does. Keep going.", author:"— Sam Levenson" },
+  { text:"An investment in knowledge pays the best interest.", author:"— Benjamin Franklin" },
+  { text:"The only way to do great work is to love what you do.", author:"— Steve Jobs" },
+  { text:"It does not matter how slowly you go as long as you do not stop.", author:"— Confucius" },
+  { text:"Success is the sum of small efforts repeated day in and day out.", author:"— Robert Collier" },
+  { text:"The secret of getting ahead is getting started.", author:"— Mark Twain" },
+  { text:"Your future self is watching you right now through your memories.", author:"— Aubrey de Grey" },
+  { text:"Push yourself, because no one else is going to do it for you.", author:"— Anonymous" },
+  { text:"Great things never come from comfort zones.", author:"— Anonymous" },
+  { text:"Hard work beats talent when talent doesn't work hard.", author:"— Tim Notke" },
+  { text:"Consistency is the true foundation of trust.", author:"— Roy T. Bennett" },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────
+
+const PROGRAM_START = '2026-03-08'; // Fixed start date — March 8, 2026
+
+function getState() {
+  try { return JSON.parse(localStorage.getItem('aitracker_v2')) || {}; } catch { return {}; }
+}
+
+function saveState(s) {
+  localStorage.setItem('aitracker_v2', JSON.stringify(s));
+}
+
+function todayKey() {
+  // Use local date in YYYY-MM-DD (avoids UTC shift issues)
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function daysSinceStart() {
+  const start = new Date(PROGRAM_START);
+  const today = new Date(todayKey());
+  return Math.max(0, Math.floor((today - start) / 86400000));
+}
+
+function getOrInitToday(state) {
+  const k = todayKey();
+  // Each day is fully independent — no carry forward, no merging of missed tasks
+  if (!state[k]) state[k] = { phase: state.currentPhase || 1, tasks:{}, rev:{} };
+  return state[k];
+}
+
+function isProgramStarted() {
+  return todayKey() >= PROGRAM_START;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+
+function render() {
+  const state = getState();
+
+  // Show countdown if program hasn't started yet
+  if (!isProgramStarted()) {
+    const daysLeft = Math.ceil((new Date(PROGRAM_START) - new Date(todayKey())) / 86400000);
+    document.getElementById('tasksList').innerHTML = `
+      <div style="margin:8px 0;background:#fff;border:1.5px solid #ddd9d0;border-radius:10px;padding:28px 20px;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:12px">⏳</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:0.06em;margin-bottom:8px;">PROGRAM STARTS MARCH 8</div>
+        <div style="font-size:13px;color:#9a9590;line-height:1.6;">${daysLeft} day${daysLeft!==1?'s':''} to go.<br>Use this time to set up Anki, create your GitHub profile,<br>and install Python + VS Code.</div>
+      </div>`;
+    document.getElementById('revisionList').innerHTML = '';
+    document.getElementById('statDay').textContent = '—';
+    document.getElementById('statStreak').textContent = '0';
+    document.getElementById('statDone').textContent = '0/0';
+    document.getElementById('statPhase').textContent = '1';
+    document.getElementById('phaseFill').style.width = '0%';
+    document.getElementById('phaseLabel').textContent = 'Program starts March 8, 2026';
+    document.getElementById('phasePct').textContent = '0%';
+    const now = new Date();
+    document.getElementById('topDate').innerHTML =
+      now.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) + '<br>' +
+      now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    renderPhaseNav(state, 1);
+    renderStreakRow(state);
+    renderQuote(1);
+    return;
+  }
+
+  const today = getOrInitToday(state);
+  const phase = today.phase || 1;
+
+  // Date
+  const now = new Date();
+  document.getElementById('topDate').innerHTML =
+    now.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) + '<br>' +
+    now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+
+  // Day number — counted from PROGRAM_START, not first open
+  const dayNum = daysSinceStart() + 1;
+  document.getElementById('statDay').textContent = dayNum;
+
+  // Streak
+  const streak = calcStreak(state);
+  document.getElementById('statStreak').textContent = streak;
+
+  // Done today
+  const phaseTasks = TASKS[phase] || [];
+  const revTasks = REVISION_TASKS;
+  const allIds = [...phaseTasks.map(t=>t.id), ...revTasks.map(t=>t.id)];
+  const doneCount = allIds.filter(id => today.tasks[id] || today.rev[id]).length;
+  document.getElementById('statDone').textContent = doneCount + '/' + allIds.length;
+  document.getElementById('statPhase').textContent = phase;
+
+  // Phase fill
+  const phaseInfo = PHASES[phase-1];
+  document.getElementById('phaseLabel').textContent = `Phase ${phase} — ${phaseInfo.name}`;
+  const pct = Math.round((doneCount / allIds.length) * 100);
+  document.getElementById('phasePct').textContent = pct + '%';
+  document.getElementById('phaseFill').style.width = pct + '%';
+  document.getElementById('phaseFill').style.background = phaseInfo.color;
+
+  renderPhaseNav(state, phase);
+  renderStreakRow(state);
+  renderQuote(dayNum);
+
+  // Tasks
+  const tl = document.getElementById('tasksList');
+  tl.innerHTML = '';
+  phaseTasks.forEach(task => {
+    const done = !!today.tasks[task.id];
+    const card = document.createElement('div');
+    card.className = 'task-card' + (done?' done':'');
+    card.innerHTML = `
+      <div class="task-accent" style="background:${task.color}"></div>
+      <div class="task-check"><span class="check-icon">✓</span></div>
+      <div class="task-content">
+        <div class="task-label" style="color:${task.color}">${task.label}</div>
+        <div class="task-title">${task.title}</div>
+        <div class="task-sub">${task.sub}</div>
+      </div>
+      <div class="task-time">${task.time}</div>`;
+    card.onclick = () => toggleTask(task.id, 'tasks');
+    tl.appendChild(card);
+  });
+
+  // Revision
+  const rl = document.getElementById('revisionList');
+  rl.innerHTML = '';
+  revTasks.forEach(task => {
+    const done = !!today.rev[task.id];
+    const card = document.createElement('div');
+    card.className = 'revision-card' + (done?' done':'');
+    card.innerHTML = `
+      <div class="rev-icon">${task.emoji}</div>
+      <div class="rev-content">
+        <div class="rev-title">${task.title}</div>
+        <div class="rev-sub">${task.sub}</div>
+      </div>
+      <div class="rev-check">${done?'✅':'○'}</div>`;
+    card.onclick = () => toggleTask(task.id, 'rev');
+    rl.appendChild(card);
+  });
+}
+
+function renderPhaseNav(state, phase) {
+  const nav = document.getElementById('phaseNav');
+  nav.innerHTML = '';
+  PHASES.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'phase-btn' + (p.id === phase ? ' active' : '');
+    btn.textContent = `P${p.id} ${p.name}`;
+    btn.onclick = () => switchPhase(p.id);
+    nav.appendChild(btn);
+  });
+}
+
+function renderStreakRow(state) {
+  const sr = document.getElementById('streakRow');
+  sr.innerHTML = '';
+  for (let i=6; i>=0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    const dk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    // Days before program start are greyed out / not counted
+    const beforeStart = dk < PROGRAM_START;
+    const dayData = state[dk];
+    const isToday = dk === todayKey();
+    const tasksDone = dayData ? Object.values(dayData.tasks||{}).filter(Boolean).length : 0;
+    const revsDone  = dayData ? Object.values(dayData.rev||{}).filter(Boolean).length : 0;
+    const isDone = (tasksDone + revsDone) >= 4;
+    const badge = document.createElement('div');
+    badge.className = 'streak-badge'
+      + (isToday ? ' today' : '')
+      + (isDone && !isToday && !beforeStart ? ' complete' : '');
+    if (beforeStart) badge.style.opacity = '0.35';
+    const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    badge.innerHTML = `
+      <span class="streak-day">${days[d.getDay()]}</span>
+      <span class="streak-num">${d.getDate()}</span>
+      <div class="streak-dot-row">
+        ${[0,1,2,3].map(j=>`<div class="sdot ${j < tasksDone && !beforeStart ? 'done':''}"></div>`).join('')}
+      </div>`;
+    sr.appendChild(badge);
+  }
+}
+
+function renderQuote(dayNum) {
+  const qi = dayNum % QUOTES.length;
+  document.getElementById('quoteText').textContent = QUOTES[qi].text;
+  document.getElementById('quoteAuthor').textContent = QUOTES[qi].author;
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────
+
+function toggleTask(id, group) {
+  const state = getState();
+  const today = getOrInitToday(state);
+  today[group][id] = !today[group][id];
+  saveState(state);
+  render();
+}
+
+function switchPhase(p) {
+  const state = getState();
+  state.currentPhase = p;
+  const today = getOrInitToday(state);
+  today.phase = p;
+  saveState(state);
+  render();
+}
+
+function calcStreak(state) {
+  // Count consecutive days (from today backwards) where ≥3 tasks were done
+  // Missed days (incomplete) simply break the streak — they are NOT carried forward
+  // Days before PROGRAM_START are ignored entirely
+  let streak = 0;
+  for (let i=0; i<180; i++) {
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    const dk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (dk < PROGRAM_START) break; // don't count days before program began
+    const dayData = state[dk];
+    if (!dayData) {
+      if (i === 0) continue; // today not yet started — don't break streak
+      break; // missed day — streak ends here, no carry forward
+    }
+    const tasks = Object.values(dayData.tasks||{}).filter(Boolean).length;
+    const revs  = Object.values(dayData.rev||{}).filter(Boolean).length;
+    if (tasks + revs >= 3) streak++;
+    else if (i > 0) break; // incomplete day in past — streak breaks, move on
+  }
+  return streak;
+}
+
+function completeDay() {
+  const state = getState();
+  const today = getOrInitToday(state);
+  const phase = today.phase || 1;
+  const phaseTasks = TASKS[phase] || [];
+  const allIds = [...phaseTasks.map(t=>t.id), ...REVISION_TASKS.map(t=>t.id)];
+  const doneCount = allIds.filter(id => today.tasks[id] || today.rev[id]).length;
+  const pct = Math.round((doneCount/allIds.length)*100);
+
+  let emoji = pct===100 ? '🏆' : pct>=75 ? '🎯' : pct>=50 ? '💪' : '📌';
+  let title = pct===100 ? 'PERFECT DAY!' : pct>=75 ? 'GREAT WORK!' : pct>=50 ? 'GOOD START!' : 'KEEP GOING!';
+  let sub = pct===100
+    ? 'All tasks done. Push to GitHub, update Anki, and rest well. You earned it.'
+    : pct>=75
+    ? `${doneCount}/${allIds.length} tasks complete. Finish the rest tomorrow morning.`
+    : `${doneCount}/${allIds.length} tasks done. Small wins compound — show up again tomorrow.`;
+
+  document.getElementById('congratsEmoji').textContent = emoji;
+  document.getElementById('congratsTitle').textContent = title;
+  document.getElementById('congratsSub').textContent = sub;
+  document.getElementById('congrats').classList.add('show');
+
+  // Mark day as reviewed
+  today.completed = true;
+  saveState(state);
+}
+
+function closeCongrats() {
+  document.getElementById('congrats').classList.remove('show');
+}
+
+function resetDay() {
+  if (!confirm('Reset all tasks for today?')) return;
+  const state = getState();
+  const k = todayKey();
+  const phase = state[k]?.phase || state.currentPhase || 1;
+  state[k] = { phase, tasks:{}, rev:{} };
+  saveState(state);
+  render();
+}
+
+// ── PAGE SWITCHING ────────────────────────────────────────────────
+
+let currentPage = 'tracker';
+
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  currentPage = page;
+  const titles = { tracker:'📈 AI TRACKER', analysis:'📊 ANALYSIS', notes:'📝 NOTES' };
+  document.getElementById('pageTitle').textContent = titles[page];
+  if (page === 'analysis') renderAnalysis();
+  if (page === 'notes') renderNotes();
+}
+
+// ── ANALYSIS ─────────────────────────────────────────────────────
+
+function renderAnalysis() {
+  const state = getState();
+  const today = getOrInitToday(state);
+  const phase = today.phase || 1;
+
+  // Collect all days from program start
+  let totalDays = 0, activeDays = 0, totalTasksDone = 0;
+  const phaseCompletions = {1:0,2:0,3:0,4:0,5:0,6:0};
+  const phaseDays = {1:0,2:0,3:0,4:0,5:0,6:0};
+
+  if (isProgramStarted()) {
+    const dayCount = daysSinceStart() + 1;
+    for (let i = 0; i < dayCount; i++) {
+      const d = new Date(PROGRAM_START);
+      d.setDate(d.getDate() + i);
+      const dk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const dayData = state[dk];
+      totalDays++;
+      if (dayData) {
+        const p = dayData.phase || 1;
+        const tasks = Object.values(dayData.tasks||{}).filter(Boolean).length;
+        const revs  = Object.values(dayData.rev||{}).filter(Boolean).length;
+        const done = tasks + revs;
+        totalTasksDone += done;
+        if (done >= 3) { activeDays++; phaseCompletions[p] = (phaseCompletions[p]||0) + done; }
+        phaseDays[p] = (phaseDays[p]||0) + 1;
+      }
+    }
+  }
+
+  const streak = calcStreak(state);
+  const completionRate = totalDays > 0 ? Math.round((activeDays/totalDays)*100) : 0;
+  const avgTasks = activeDays > 0 ? (totalTasksDone/activeDays).toFixed(1) : '0';
+  const daysLeft = Math.max(0, 180 - (isProgramStarted() ? daysSinceStart() : 0));
+
+  // Stats grid
+  document.getElementById('analysisGrid').innerHTML = `
+    <div class="an-card">
+      <div class="an-label">Total Active Days</div>
+      <div class="an-val" style="color:#e84c3d">${activeDays}</div>
+      <div class="an-sub">of ${totalDays} days started</div>
+    </div>
+    <div class="an-card">
+      <div class="an-label">Completion Rate</div>
+      <div class="an-val" style="color:#2563eb">${completionRate}%</div>
+      <div class="an-sub">days with ≥3 tasks done</div>
+    </div>
+    <div class="an-card">
+      <div class="an-label">Best Streak</div>
+      <div class="an-val" style="color:#d97706">${streak} 🔥</div>
+      <div class="an-sub">consecutive active days</div>
+    </div>
+    <div class="an-card">
+      <div class="an-label">Avg Tasks/Day</div>
+      <div class="an-val" style="color:#16a34a">${avgTasks}</div>
+      <div class="an-sub">on active days</div>
+    </div>
+    <div class="an-card">
+      <div class="an-label">Days Remaining</div>
+      <div class="an-val" style="color:#7c3aed">${daysLeft}</div>
+      <div class="an-sub">of 180 total</div>
+    </div>
+    <div class="an-card">
+      <div class="an-label">Current Phase</div>
+      <div class="an-val" style="color:#0891b2">P${phase}</div>
+      <div class="an-sub">${PHASES[phase-1].name}</div>
+    </div>`;
+
+  // Phase progress list
+  const ppl = document.getElementById('phaseProgressList');
+  ppl.innerHTML = '';
+  PHASES.forEach(p => {
+    const maxPossible = 8 * 30; // rough max tasks per phase
+    const done = phaseCompletions[p.id] || 0;
+    const pct = Math.min(100, Math.round((done / maxPossible) * 100));
+    ppl.innerHTML += `
+      <div class="pp-row">
+        <div class="pp-top">
+          <span class="pp-name">P${p.id} · ${p.name}</span>
+          <span class="pp-pct">${done} tasks · ${pct}%</span>
+        </div>
+        <div class="pp-bar"><div class="pp-fill" style="width:${pct}%;background:${p.color}"></div></div>
+      </div>`;
+  });
+
+  // Activity calendar — show last 5 weeks (35 days)
+  const cg = document.getElementById('calendarGrid');
+  cg.innerHTML = '';
+  const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  dayNames.forEach(d => {
+    cg.innerHTML += `<div class="cal-header-day">${d}</div>`;
+  });
+
+  // Start from beginning of the current week (Sunday) going back 4 more weeks
+  const todayDate = new Date();
+  const startOfWeek = new Date(todayDate);
+  startOfWeek.setDate(todayDate.getDate() - todayDate.getDay() - 28); // 5 weeks back
+
+  for (let i = 0; i < 35; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    const dk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const isTodayDate = dk === todayKey();
+    const beforeStart = dk < PROGRAM_START;
+    const dayData = state[dk];
+    const tasks = dayData ? Object.values(dayData.tasks||{}).filter(Boolean).length + Object.values(dayData.rev||{}).filter(Boolean).length : 0;
+    const div = document.createElement('div');
+    div.className = 'cal-day'
+      + (tasks >= 3 && !beforeStart ? ' has-data' : '')
+      + (isTodayDate ? ' today-cal' : '')
+      + (beforeStart ? ' before-start' : '');
+    div.textContent = d.getDate();
+    if (tasks >= 3 && !beforeStart) div.title = `${tasks} tasks done`;
+    cg.appendChild(div);
+  }
+}
+
+// ── NOTES ─────────────────────────────────────────────────────────
+
+let currentNoteId = null;
+let saveTimer = null;
+
+function getNotes() {
+  try { return JSON.parse(localStorage.getItem('aitracker_notes')) || []; } catch { return []; }
+}
+
+function saveNotes(notes) {
+  localStorage.setItem('aitracker_notes', JSON.stringify(notes));
+}
+
+function addNote() {
+  const notes = getNotes();
+  const id = 'note_' + Date.now();
+  const note = {
+    id,
+    title: 'New Note',
+    content: '',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+  };
+  notes.unshift(note);
+  saveNotes(notes);
+  currentNoteId = id;
+  renderNotes();
+  // Focus title
+  setTimeout(() => {
+    const t = document.getElementById('noteTitleInput');
+    if (t) { t.focus(); t.select(); }
+  }, 50);
+}
+
+function deleteNote(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this note?')) return;
+  let notes = getNotes().filter(n => n.id !== id);
+  saveNotes(notes);
+  if (currentNoteId === id) currentNoteId = notes.length > 0 ? notes[0].id : null;
+  renderNotes();
+}
+
+function selectNote(id) {
+  currentNoteId = id;
+  renderNotes();
+  setTimeout(() => {
+    const ta = document.getElementById('noteTextarea');
+    if (ta) ta.focus();
+  }, 50);
+}
+
+function saveCurrentNote() {
+  if (!currentNoteId) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const notes = getNotes();
+    const idx = notes.findIndex(n => n.id === currentNoteId);
+    if (idx === -1) return;
+    notes[idx].title = document.getElementById('noteTitleInput').value || 'Untitled';
+    notes[idx].content = document.getElementById('noteTextarea').value;
+    notes[idx].updated = new Date().toISOString();
+    saveNotes(notes);
+    renderNotesMeta(notes[idx]);
+    renderNotesTabs(notes); // update tab titles
+  }, 400);
+}
+
+function renderNotesMeta(note) {
+  const m = document.getElementById('noteMeta');
+  if (!m) return;
+  const d = new Date(note.updated);
+  const words = (note.content || '').trim().split(/\s+/).filter(Boolean).length;
+  m.textContent = `Saved · ${words} words · ${d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
+function renderNotesTabs(notes) {
+  const bar = document.getElementById('notesTabBar');
+  // Keep the + button
+  bar.innerHTML = '';
+  notes.forEach(note => {
+    const tab = document.createElement('button');
+    tab.className = 'note-tab' + (note.id === currentNoteId ? ' active' : '');
+    tab.innerHTML = `<span>${note.title.length > 14 ? note.title.slice(0,14)+'…' : note.title}</span><span class="tab-close" onclick="deleteNote('${note.id}',event)">×</span>`;
+    tab.onclick = () => selectNote(note.id);
+    bar.appendChild(tab);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'note-add-btn';
+  addBtn.title = 'New note';
+  addBtn.textContent = '＋';
+  addBtn.onclick = addNote;
+  bar.appendChild(addBtn);
+}
+
+function renderNotes() {
+  const notes = getNotes();
+  renderNotesTabs(notes);
+
+  const empty = document.getElementById('notesEmpty');
+  const titleInput = document.getElementById('noteTitleInput');
+  const textarea = document.getElementById('noteTextarea');
+  const meta = document.getElementById('noteMeta');
+
+  if (notes.length === 0 || !currentNoteId) {
+    empty.style.display = 'block';
+    titleInput.style.display = 'none';
+    textarea.style.display = 'none';
+    meta.style.display = 'none';
+    return;
+  }
+
+  const note = notes.find(n => n.id === currentNoteId) || notes[0];
+  currentNoteId = note.id;
+
+  empty.style.display = 'none';
+  titleInput.style.display = 'block';
+  textarea.style.display = 'block';
+  meta.style.display = 'block';
+
+  titleInput.value = note.title;
+  textarea.value = note.content;
+  renderNotesMeta(note);
+}
+
+// Tab key support in textarea
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Tab' && document.activeElement.id === 'noteTextarea') {
+    e.preventDefault();
+    const ta = document.activeElement;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + 2;
+    saveCurrentNote();
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────────────────
+render();
+setInterval(() => {
+  const now = new Date();
+  const el = document.getElementById('topDate');
+  if(el) el.innerHTML =
+    now.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) + '<br>' +
+    now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}, 60000);
+</script>
+</body>
+</html>
